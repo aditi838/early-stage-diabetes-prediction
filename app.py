@@ -1,137 +1,96 @@
 import streamlit as st
-import pickle
-import base64
-model = pickle.load(open('model.pkl', 'rb'))
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
+# Load data
+data_url = "diabetes_data_upload.csv"
+data = pd.read_csv(data_url)
 
-def run():
-    with st.form(key='my_form'):
-        st.title("Early Stage diabetes prediction")
-        file_ = open("act4yourheart-diabetes.gif", "rb")
-        contents = file_.read()
-        data_url = base64.b64encode(contents).decode("utf-8")
-        file_.close()
-        st.markdown(
-           f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
-           unsafe_allow_html=True,
-        )
-        gender = st.radio("Gender: ", ('Male', 'Female'))
-        if gender == 'Male':
-            a = 1
-        else:
-            a = 0
-        age = st.slider(label='Enter your age', min_value=1, max_value=100)
-        polyuria = st.radio("Do you have Polyuria: ", ('Yes', 'No'))
-        if polyuria == 'Yes':
-            b = 1
-        else:
-            b = 0
-        link1 = '[what is Polyuria?](https://en.wikipedia.org/wiki/Polyuria)'
-        st.markdown(link1, unsafe_allow_html=True)
-        
-        
-        polydipsia = st.radio("Do you have Polydipsia: ", ('Yes', 'No'))
-        if polydipsia == 'Yes':
-            o = 1
-        else:
-            o = 0
-        link2 = '[what is Polydipsia?](https://en.wikipedia.org/wiki/Polydipsia)'
-        st.markdown(link2, unsafe_allow_html=True)
-        wt_loss = st.radio("Have you experienced sudden weight loss: ", ('Yes', 'No'))
-        if wt_loss == 'Yes':
-            c = 1
-        else:
-            c = 0
-        weakness = st.radio("Do you feel any weakness: ", ('Yes', 'No'))
-        if weakness == 'Yes':
-            d = 1
-        else:
-            d = 0
-        polyphagia = st.radio("Do you have Polyphagia: ", ('Yes', 'No'))
-        if polyphagia == 'Yes':
-            e = 1
-        else:
-            e = 0
-        link3 = '[what is Polyphagia?](https://en.wikipedia.org/wiki/Polyphagia)'
-        st.markdown(link3, unsafe_allow_html=True)
-        gt_thrush = st.radio("Do you have Genital thrush: ", ('Yes', 'No'))
-        if gt_thrush == 'Yes':
-            f = 1
-        else:
-            f = 0
-        link4 = '[what is Genital thrush?](https://www.ticahealth.org/interactive-guide/your-body/genital-problems/genital-thrush/)'
-        st.markdown(link4, unsafe_allow_html=True)
-        visual_blurring = st.radio("Do you hvae visual blurring: ", ('Yes', 'No'))
+# Preprocessing
+labelencoder = LabelEncoder()
+for column in data.columns:
+    data[column] = labelencoder.fit_transform(data[column])
 
-        if visual_blurring == 'Yes':
-            g = 1
-        else:
-            g = 0
-        link5 = '[what is Visua blurring?](https://en.wikipedia.org/wiki/Blurred_vision)'
-        st.markdown(link5, unsafe_allow_html=True)
-        itching = st.radio("Do you have Itching: ", ('Yes', 'No'))
+X = data.drop(columns=['class'])
+Y = data['class']
 
-        if itching == 'Yes':
-            h = 1
-        else:
-            h = 0
-        link6 = '[what is Itching?](https://en.wikipedia.org/wiki/Itch)'
-        st.markdown(link6, unsafe_allow_html=True) 
-        irritability = st.radio("Do you have Irritability: ", ('Yes', 'No'))
+# Train a RandomForest model
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=1000)
+model = RandomForestClassifier(random_state=1000)
+model.fit(x_train, y_train)
 
-        if irritability == 'Yes':
-            i = 1
-        else:
-            i = 0
-        link7 = '[what is Irritability?](https://en.wikipedia.org/wiki/Irritability)'
-        st.markdown(link7, unsafe_allow_html=True)
-        delayed_healing = st.radio("Do you have delayed healing: ", ('Yes', 'No'))
-        if delayed_healing == 'Yes':
-            j = 1
-        else:
-            j = 0
-        partial_paresis = st.radio("Do you have partial paresis: ", ('Yes', 'No'))
-        if partial_paresis == 'Yes':
-            k = 1
-        else:
-            k = 0
-        link8 = '[what is Paresis?](https://en.wikipedia.org/wiki/Paresis)'
-        st.markdown(link8, unsafe_allow_html=True)
-        muscle_stiffness = st.radio("Do you have muscle stiffness: ", ('Yes', 'No'))
-        if muscle_stiffness == 'Yes':
-            l = 1
-        else:
-            l = 0
-        alopecia = st.radio("Do you have Alopecia: ", ('Yes', 'No'))
-        if alopecia == 'Yes':
-            m = 1
-        else:
-            m = 0
-        link9 = '[what is Alopecia?](https://en.wikipedia.org/wiki/Hair_loss)'
-        st.markdown(link9, unsafe_allow_html=True)
-        obesity = st.radio("Do you have Obesity: ", ('Yes', 'No'))
-        if obesity == 'Yes':
-            n = 1
-        else:
-            n = 0
-        
-         
+# Define feature names for user input
+feature_mapping = {
+    'Gender': "What is your gender?",
+    'Age': "What is your age?",
+    'Polyuria': "Do you experience frequent urination?",
+    'Polydipsia': "Do you often feel excessively thirsty?",
+    'sudden weight loss': "Have you had sudden weight loss recently?",
+    'weakness': "Do you often feel weak or tired?",
+    'Polyphagia': "Do you feel excessively hungry?",
+    'Genital thrush': "Do you experience itching or infection in the genital area?",
+    'visual blurring': "Do you have blurred vision?",
+    'Itching': "Do you often feel itchy?",
+    'Irritability': "Do you experience frequent mood swings or irritability?",
+    'delayed healing': "Do your wounds take longer than usual to heal?",
+    'partial paresis': "Do you feel partial numbness or weakness in muscles?",
+    'muscle stiffness': "Do you experience stiffness in your muscles?",
+    'Alopecia': "Do you have unusual hair loss?",
+    'Obesity': "Are you considered overweight or obese?"
+}
 
-        if st.form_submit_button("Submit"):
-            features = [[age, a, b, o, c, d, e, f, g, h, i, j, k, l, m, n]]
-            print(features)
-            prediction = model.predict(features)
-            lc = [str(i) for i in prediction]
-            ans = int("".join(lc))
-            if ans == 0:
-                st.error(
-                    "you don't have diabetic symptoms"
-                )
-            else:
-                st.success(
-                    "you have early stage diabetic symptoms. you should consult to the doctor."
-                    )
+# Streamlit app
+st.title("Diabetes Prediction App")
+st.write("Answer the following questions to predict your risk of diabetes. All inputs are required.")
 
-link9 = '[CONTACT US](https://aditi359-contactus-contact-form-gkb347.streamlit.app/)'
-st.markdown(link9, unsafe_allow_html=True)
-run()
+# Collect user input for all features
+user_input = {}
+for feature, question in feature_mapping.items():
+    if feature == 'Age':
+        user_input[feature] = st.slider(question, 1, 120, 25)  # Slider for age
+    elif feature == 'Gender':
+        user_input[feature] = 1 if st.radio(question, ["Male", "Female"]) == "Male" else 0  # Gender as Male/Female
+    else:
+        user_input[feature] = 1 if st.radio(question, ["Yes", "No"]) == "Yes" else 0
+
+# Convert user input to DataFrame
+input_data = pd.DataFrame([user_input])
+input_data = input_data[X.columns]  # Reorder columns to match the training data
+
+# Prediction
+if st.button("Predict"):
+    prediction = model.predict(input_data)
+    prediction_prob = model.predict_proba(input_data)[0][1]  # Probability of diabetes
+    result = "Diabetes Detected" if prediction[0] == 1 else "No Diabetes Detected"
+
+    # Display result
+    st.subheader(f"Prediction: {result}")
+    st.write(f"Probability of Diabetes: {prediction_prob:.2%}")
+
+    # Display actionable insights
+    if prediction_prob > 0.8:
+        risk_level = "High Risk"
+        st.warning("High risk of diabetes detected. Please consult a healthcare professional.")
+    elif prediction_prob > 0.65:
+        st.success("Medium risk of diabetes. Maintain a healthy lifestyle!")
+    elif prediction_prob > 0.4:
+        st.success("Low risk of diabetes. Maintain a healthy lifestyle!")
+    else:
+        st.success("Very Low risk of diabetes. Maintain a healthy lifestyle!")
+
+    # Optional: Feature importance explanation
+    st.write("### Feature Importance")
+    feature_importance = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
+    st.bar_chart(feature_importance)
+
+# Display model evaluation metrics
+if st.checkbox("Show Model Evaluation Metrics"):
+    y_pred = model.predict(x_test)
+    st.write("Accuracy Score:", accuracy_score(y_test, y_pred))
+    st.write("Confusion Matrix:", confusion_matrix(y_test, y_pred))
+    st.text("Classification Report:")
+    st.text(classification_report(y_test, y_pred))
